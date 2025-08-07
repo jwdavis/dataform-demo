@@ -1,0 +1,20 @@
+config {
+    type: "table",
+    schema: constants.DATASET_STAGING,
+    description: "Cleaned and validated orders data"
+}
+
+SELECT 
+    order_id,
+    customer_id,
+    product_id,
+    PARSE_DATE('%Y-%m-%d', order_date) as order_date,
+    quantity,
+    unit_price,
+    quantity * unit_price as total_amount,
+    UPPER(status) as status,
+    CURRENT_TIMESTAMP() as processed_at
+FROM ${ref("raw_data", "orders")}
+WHERE quantity > 0 
+  AND unit_price > 0
+  AND status IN ('completed', 'pending', 'cancelled')

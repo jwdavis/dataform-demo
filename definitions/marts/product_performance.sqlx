@@ -1,0 +1,23 @@
+config {
+    type: "table",
+    schema: constants.DATASET_MARTS,
+    description: "Product sales performance metrics"
+}
+
+SELECT 
+    p.product_id,
+    p.product_name,
+    p.category,
+    p.cost_price,
+    p.retail_price,
+    p.margin_percent,
+    COUNT(o.order_id) as total_orders,
+    SUM(o.quantity) as total_quantity_sold,
+    SUM(o.total_amount) as total_revenue,
+    SUM((p.retail_price - p.cost_price) * o.quantity) as total_profit,
+    AVG(o.quantity) as avg_quantity_per_order
+FROM ${ref("stg_products")} p
+LEFT JOIN ${ref("stg_orders")} o ON p.product_id = o.product_id
+WHERE o.status = 'COMPLETED'
+GROUP BY p.product_id, p.product_name, p.category, p.cost_price, p.retail_price, p.margin_percent
+ORDER BY total_revenue DESC

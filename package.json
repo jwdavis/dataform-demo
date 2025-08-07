@@ -1,0 +1,9 @@
+{
+    "name": "dataform-demo",
+    "version": "1.0.0",
+    "description": "Google Cloud Dataform demo project",
+    "main": "index.js",
+    "dependencies": {
+        "@dataform/core": "^2.0.0"
+    }
+}

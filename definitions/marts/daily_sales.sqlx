@@ -1,0 +1,17 @@
+config {
+    type: "table",
+    schema: constants.DATASET_MARTS,
+    description: "Daily sales summary"
+}
+
+SELECT 
+    o.order_date,
+    COUNT(DISTINCT o.order_id) as total_orders,
+    COUNT(DISTINCT o.customer_id) as unique_customers,
+    SUM(o.total_amount) as total_revenue,
+    AVG(o.total_amount) as avg_order_value,
+    SUM(CASE WHEN o.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_orders,
+    SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled_orders
+FROM ${ref("stg_orders")} o
+GROUP BY o.order_date
+ORDER BY o.order_date DESC

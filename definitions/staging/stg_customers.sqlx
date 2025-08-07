@@ -1,0 +1,16 @@
+config {
+    type: "table",
+    schema: constants.DATASET_STAGING,
+    description: "Cleaned customer data"
+}
+
+SELECT 
+    customer_id,
+    TRIM(customer_name) as customer_name,
+    LOWER(TRIM(email)) as email,
+    PARSE_DATE('%Y-%m-%d', registration_date) as registration_date,
+    UPPER(TRIM(country)) as country,
+    CURRENT_TIMESTAMP() as processed_at
+FROM ${ref("raw_data", "customers")}
+WHERE email IS NOT NULL 
+  AND customer_name IS NOT NULL
