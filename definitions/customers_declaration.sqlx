@@ -1,0 +1,6 @@
+// definitions/customers_declaration.sqlx
+config {
+  type: "declaration",           // tells Dataform this is an externally managed table
+  schema: "dataform_raw_data",   // the dataset where customers actually lives
+  name: "customers"
+}
