@@ -4,15 +4,17 @@ config {
     description: "Cleaned product data"
 }
 
-SELECT 
-    product_id,
-    TRIM(product_name) as product_name,
-    TRIM(category) as category,
-    cost_price,
-    retail_price,
-    retail_price - cost_price as margin,
-    ROUND((retail_price - cost_price) / retail_price * 100, 2) as margin_percent,
-    CURRENT_TIMESTAMP() as processed_at
-FROM ${ref("raw_data", "products")}
-WHERE cost_price > 0 
+SELECT
+  product_id,
+  TRIM(product_name) AS product_name,
+  TRIM(category) AS category,
+  cost_price,
+  retail_price,
+  retail_price - cost_price AS margin,
+  ROUND((retail_price - cost_price) / retail_price * 100, 2) AS margin_percent,
+  CURRENT_TIMESTAMP() AS processed_at
+FROM
+  ${ref("dataform_raw_data", "products")}
+WHERE
+  cost_price > 0
   AND retail_price > cost_price
