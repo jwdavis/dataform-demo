@@ -1,5 +1,5 @@
 config {
   type: "declaration",           // tells Dataform this is an externally managed table
-  schema: "dataform_raw_data",   // the dataset where customers actually lives
+  schema: "dataform_demo_raw_data",   // the dataset where customers actually lives
   name: "orders"
 }

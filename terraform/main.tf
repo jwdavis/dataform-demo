@@ -27,7 +27,7 @@ resource "google_project_service" "bigquery_api" {
 
 # Create BigQuery datasets
 resource "google_bigquery_dataset" "raw_data" {
-  dataset_id  = "dataform_raw_data"
+  dataset_id  = "dataform_demo_raw_data"
   description = "Raw data from various sources"
   location    = "US"
 
@@ -35,7 +35,7 @@ resource "google_bigquery_dataset" "raw_data" {
 }
 
 resource "google_bigquery_dataset" "staging" {
-  dataset_id  = "dataform_staging"
+  dataset_id  = "dataform_demo_staging"
   description = "Staging tables for data transformation"
   location    = "US"
 
@@ -43,7 +43,7 @@ resource "google_bigquery_dataset" "staging" {
 }
 
 resource "google_bigquery_dataset" "marts" {
-  dataset_id  = "dataform_marts"
+  dataset_id  = "dataform_demo_marts"
   description = "Business intelligence mart tables"
   location    = "US"
 
@@ -117,111 +117,178 @@ resource "google_secret_manager_secret_version" "github_token" {
 }
 
 # BigQuery tables for sample data
-resource "google_bigquery_table" "orders" {
-  dataset_id = google_bigquery_dataset.raw_data.dataset_id
-  table_id   = "orders"
-
-  schema = jsonencode([
-    {
-      name = "order_id"
-      type = "INTEGER"
-      mode = "REQUIRED"
+# Define table schemas in a local variable
+locals {
+  tables = {
+    orders = {
+      schema = [
+        {
+          name = "order_id"
+          type = "INTEGER"
+          mode = "REQUIRED"
+        },
+        {
+          name = "customer_id"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "product_id"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "order_date"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "quantity"
+          type = "INTEGER"
+          mode = "REQUIRED"
+        },
+        {
+          name = "unit_price"
+          type = "FLOAT"
+          mode = "REQUIRED"
+        },
+        {
+          name = "status"
+          type = "STRING"
+          mode = "REQUIRED"
+        }
+      ]
     },
-    {
-      name = "customer_id"
-      type = "STRING"
-      mode = "REQUIRED"
+    customers = {
+      schema = [
+        {
+          name = "customer_id"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "customer_name"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "email"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "registration_date"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "country"
+          type = "STRING"
+          mode = "REQUIRED"
+        }
+      ]
     },
-    {
-      name = "product_id"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "order_date"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "quantity"
-      type = "INTEGER"
-      mode = "REQUIRED"
-    },
-    {
-      name = "unit_price"
-      type = "FLOAT"
-      mode = "REQUIRED"
-    },
-    {
-      name = "status"
-      type = "STRING"
-      mode = "REQUIRED"
+    products = {
+      schema = [
+        {
+          name = "product_id"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "product_name"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "category"
+          type = "STRING"
+          mode = "REQUIRED"
+        },
+        {
+          name = "cost_price"
+          type = "FLOAT"
+          mode = "REQUIRED"
+        },
+        {
+          name = "retail_price"
+          type = "FLOAT"
+          mode = "REQUIRED"
+        }
+      ]
     }
-  ])
+  }
 }
 
-resource "google_bigquery_table" "customers" {
-  dataset_id = google_bigquery_dataset.raw_data.dataset_id
-  table_id   = "customers"
+# Create BigQuery tables using for_each
+resource "google_bigquery_table" "tables" {
+  for_each = local.tables
 
-  schema = jsonencode([
-    {
-      name = "customer_id"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "customer_name"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "email"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "registration_date"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "country"
-      type = "STRING"
-      mode = "REQUIRED"
-    }
-  ])
+  dataset_id = google_bigquery_dataset.raw_data.dataset_id
+  table_id   = each.key
+
+  schema = jsonencode(each.value.schema)
 }
 
-resource "google_bigquery_table" "products" {
-  dataset_id = google_bigquery_dataset.raw_data.dataset_id
-  table_id   = "products"
-
-  schema = jsonencode([
-    {
-      name = "product_id"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "product_name"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "category"
-      type = "STRING"
-      mode = "REQUIRED"
-    },
-    {
-      name = "cost_price"
-      type = "FLOAT"
-      mode = "REQUIRED"
-    },
-    {
-      name = "retail_price"
-      type = "FLOAT"
-      mode = "REQUIRED"
-    }
-  ])
+locals {
+  bucket_name       = var.project_id
+  bucket_exists     = try(data.google_storage_bucket.existing.name, null) != null
+  bucket_name_final = local.bucket_exists ? data.google_storage_bucket.existing.name : google_storage_bucket.bucket[0].name
 }
+
+
+# Try to get existing bucket data
+data "google_storage_bucket" "existing" {
+  name = local.bucket_name
+}
+
+# Create bucket only if the data source fails (bucket doesn't exist)
+resource "google_storage_bucket" "bucket" {
+  count    = try(data.google_storage_bucket.existing.name, null) != null ? 0 : 1
+  name     = local.bucket_name
+  location = "US"
+}
+
+# Upload CSV files to GCS bucket using for_each
+resource "google_storage_bucket_object" "csv_files" {
+  for_each = local.tables
+
+  name   = "dataform_demo/${each.key}.csv"
+  bucket = local.bucket_name_final
+  source = "./${each.key}.csv"
+
+  depends_on = [
+
+  ]
+}
+
+# # Load data from CSV files into BigQuery tables using for_each
+# resource "google_bigquery_job" "data_load" {
+#   for_each = local.tables
+
+#   job_id = "${each.key}_load_${formatdate("YYYYMMDD_hhmmss", timestamp())}"
+
+#   load {
+#     source_uris = [
+#       google_storage_bucket_object.csv_files[each.key].self_link
+#     ]
+
+#     destination_table {
+#       project_id = var.project_id
+#       dataset_id = google_bigquery_dataset.raw_data.dataset_id
+#       table_id   = google_bigquery_table.tables[each.key].table_id
+#     }
+
+#     source_format     = "CSV"
+#     skip_leading_rows = 1
+#     field_delimiter   = ","
+#     quote             = "\""
+#     write_disposition = "WRITE_TRUNCATE"
+#     autodetect        = false
+#   }
+
+#   depends_on = [
+#     google_bigquery_table.tables,
+#     google_storage_bucket_object.csv_files
+#   ]
+# }

@@ -2,6 +2,6 @@
     "warehouse": "bigquery",
     "defaultSchema": "dataform_demo",
     "assertionSchema": "dataform_assertions",
-    "defaultDatabase": "jwd-gcp-demos",
+    "defaultDatabase": "<project-id>",
     "defaultLocation": "US"
 }
