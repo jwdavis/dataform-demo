@@ -2,11 +2,11 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 4.0"
+      version = "~> 6.0"
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 4.0"
+      version = "~> 6.0"
     }
   }
 }
@@ -16,13 +16,20 @@ provider "google" {
   region  = var.region
 }
 
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
+
 # Enable required APIs
 resource "google_project_service" "dataform_api" {
-  service = "dataform.googleapis.com"
+  service            = "dataform.googleapis.com"
+  disable_on_destroy = false
 }
 
 resource "google_project_service" "bigquery_api" {
-  service = "bigquery.googleapis.com"
+  service            = "bigquery.googleapis.com"
+  disable_on_destroy = false
 }
 
 # Create BigQuery datasets
@@ -78,11 +85,28 @@ resource "google_project_iam_member" "dataform_dataform_admin" {
   member  = "serviceAccount:${google_service_account.dataform_sa.email}"
 }
 
+# Grant BigQuery Job User role to dataform_sa
+resource "google_project_iam_member" "dataform_bigquery_jobuser" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.dataform_sa.email}"
+}
+
+resource "google_service_account_iam_member" "dataform_token_creator" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/dataform-demo-sa@jwd-gcp-demos.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-dataform.iam.gserviceaccount.com"
+
+  depends_on = [google_service_account.dataform_sa]
+}
+
 resource "google_dataform_repository" "dataform_repo" {
   provider = google-beta
   project  = var.project_id
   name     = var.dataform_repository_name
   region   = var.region
+
+  service_account = google_service_account.dataform_sa.email
 
   git_remote_settings {
     url                                 = "https://github.com/${var.git_username}/dataform-demo.git"
@@ -107,13 +131,20 @@ resource "google_secret_manager_secret" "github_token" {
   project   = var.project_id
 
   replication {
-    automatic = true
+    auto {}
   }
 }
 
 resource "google_secret_manager_secret_version" "github_token" {
   secret      = google_secret_manager_secret.github_token.id
   secret_data = var.git_token
+}
+
+# Grant Secret Manager Accessor role to Dataform service agent for github_token
+resource "google_secret_manager_secret_iam_member" "dataform_github_token_accessor" {
+  secret_id = google_secret_manager_secret.github_token.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-dataform.iam.gserviceaccount.com"
 }
 
 # BigQuery tables for sample data
@@ -227,7 +258,8 @@ resource "google_bigquery_table" "tables" {
   dataset_id = google_bigquery_dataset.raw_data.dataset_id
   table_id   = each.key
 
-  schema = jsonencode(each.value.schema)
+  schema              = jsonencode(each.value.schema)
+  deletion_protection = false
 }
 
 locals {
