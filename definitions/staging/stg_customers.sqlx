@@ -11,6 +11,6 @@ SELECT
     PARSE_DATE('%Y-%m-%d', registration_date) as registration_date,
     UPPER(TRIM(country)) as country,
     CURRENT_TIMESTAMP() as processed_at
-FROM ${ref("dataform_raw_data", "customers")}
+FROM ${ref("customers")}
 WHERE email IS NOT NULL 
   AND customer_name IS NOT NULL
