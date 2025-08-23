@@ -293,34 +293,3 @@ resource "google_storage_bucket_object" "csv_files" {
 
   ]
 }
-
-# # Load data from CSV files into BigQuery tables using for_each
-# resource "google_bigquery_job" "data_load" {
-#   for_each = local.tables
-
-#   job_id = "${each.key}_load_${formatdate("YYYYMMDD_hhmmss", timestamp())}"
-
-#   load {
-#     source_uris = [
-#       google_storage_bucket_object.csv_files[each.key].self_link
-#     ]
-
-#     destination_table {
-#       project_id = var.project_id
-#       dataset_id = google_bigquery_dataset.raw_data.dataset_id
-#       table_id   = google_bigquery_table.tables[each.key].table_id
-#     }
-
-#     source_format     = "CSV"
-#     skip_leading_rows = 1
-#     field_delimiter   = ","
-#     quote             = "\""
-#     write_disposition = "WRITE_TRUNCATE"
-#     autodetect        = false
-#   }
-
-#   depends_on = [
-#     google_bigquery_table.tables,
-#     google_storage_bucket_object.csv_files
-#   ]
-# }
