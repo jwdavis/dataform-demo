@@ -9,14 +9,14 @@ This is a simple demo of using Dataform to manage data workflows in BigQuery. It
 1. Create a Personal Access Token in your Github account. This is required to wire the Dataform repository to your Github repository
    1. **https://github.com/settings/apps > Tokens (classic) > Generate new token**
    2. Give it **repo** permissions
-   3. Copy the token and store it in an editor or file somewhere
+   3. Copy the token and store it in an editor or file somewhere; you'll sub it into the file below
 2. Fork this repository
-3. Clone the repository into your home directory in Cloud Shell
+3. Clone the forked repository into your home directory in Cloud Shell
 4. Replace all occurrences of **`<project-id>`** with your project's ID
    1. Edit files
    2. Commit changes
    3. Push to your Github repo
-5. In the terraform directory, create a `terraform.tfvars` file
+5. In the **`misc/terraform`** directory, create a `terraform.tfvars` file
    1. Populate it like so (replacing placeholders)
     ```
     project_id               = "<project-id>"
@@ -28,7 +28,7 @@ This is a simple demo of using Dataform to manage data workflows in BigQuery. It
     ```
 6. Run Terraform to set up all the key pieces for the demo
    ```bash
-   cd ~/dataform-demo/terraform
+   cd ~/dataform-demo/misc/terraform
    terraform init
    terraform apply
    ```
@@ -48,7 +48,6 @@ This is a simple demo of using Dataform to manage data workflows in BigQuery. It
    1. Objects are in GCS @ **`gs://project-id/dataform-demo/`**
    2. Show contents of files
 3. Show the students the datasets created
-   1. Discuss the purpose of the dev datasets
 4. Show the students the Dataform repo
    1. Show the **Git connection**
    2. Show the **Service account to be used**
@@ -56,6 +55,7 @@ This is a simple demo of using Dataform to manage data workflows in BigQuery. It
    4. You can discuss the git token in Secret Manager or not
 5. Create a development workspace
    1. Show the students that the code has been replicated from Github
+   2. Discuss the purpose of development environments
 6. Load data into the raw tables using the SQL script or shell script
    1. https://github.com/jwdavis/dataform-demo/blob/main/misc/load.sql 
    2. https://github.com/jwdavis/dataform-demo/blob/main/misc/load.sh 
@@ -66,7 +66,7 @@ This is a simple demo of using Dataform to manage data workflows in BigQuery. It
    3. Choose **Select actions to execute > Select all > OK**
    4. Click **Start execution**
 8. Show the students the details of the execution
-9. Show the students the results in the BigQuery tables (dev tables)
+9.  Show the students the results in the BigQuery tables (dev tables)
 
 ## Discussion instructions
 
@@ -83,12 +83,18 @@ This is a simple demo of using Dataform to manage data workflows in BigQuery. It
 
 ## Teardown
 
-1. You need to manually delete the Dataform repo
-   1. First, delete the development workspace
-   2. Second, delete any release and workflow configurations
-   3. Third, delete the repo in Dataform
+1. Use the pre-tf-cleanup.py to do some cleanup that Terraform can't
+   1. create a virtual environment
+   2. install the requirements
+   3. run the script
+      ```bash
+      cd ~/dataform-demo/misc/
+      python -m venv .venv
+      source .venv/bin/activate
+      pip install -r requirements.txt
+      python pre-tf-cleanup.py
+      ```
 2. Then use Terraform to tear the rest down
    ```bash
-   cd ~/dataform-demo/terraform
    terraform destroy
    ```

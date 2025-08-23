@@ -101,10 +101,11 @@ resource "google_service_account_iam_member" "dataform_token_creator" {
 }
 
 resource "google_dataform_repository" "dataform_repo" {
-  provider = google-beta
-  project  = var.project_id
-  name     = var.dataform_repository_name
-  region   = var.region
+  provider     = google-beta
+  project      = var.project_id
+  name         = var.dataform_repository_name
+  display_name = var.dataform_repository_name
+  region       = var.region
 
   service_account = google_service_account.dataform_sa.email
 
