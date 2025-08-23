@@ -14,7 +14,7 @@ SELECT
   ROUND((retail_price - cost_price) / retail_price * 100, 2) AS margin_percent,
   CURRENT_TIMESTAMP() AS processed_at
 FROM
-  ${ref("dataform_raw_data", "products")}
+  ${ref("products")}
 WHERE
   cost_price > 0
   AND retail_price > cost_price

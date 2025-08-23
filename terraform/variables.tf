@@ -18,7 +18,7 @@ variable "dataform_repository_name" {
 variable "service_account_name" {
   description = "Name of the service account for Dataform"
   type        = string
-  default     = "dataform-sa"
+  default     = "dataform-demo-sa"
 }
 
 variable "git_token" {
