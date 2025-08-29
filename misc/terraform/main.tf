@@ -93,11 +93,11 @@ resource "google_project_iam_member" "dataform_bigquery_jobuser" {
 }
 
 resource "google_service_account_iam_member" "dataform_token_creator" {
-  service_account_id = "projects/${var.project_id}/serviceAccounts/dataform-demo-sa@jwd-gcp-demos.iam.gserviceaccount.com"
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.service_account_name}@${var.project_id}.iam.gserviceaccount.com"
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-dataform.iam.gserviceaccount.com"
 
-  depends_on = [google_service_account.dataform_sa]
+  depends_on = [google_service_account.dataform_sa, google_project_service.dataform_api]
 }
 
 resource "google_dataform_repository" "dataform_repo" {
