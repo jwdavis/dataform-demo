@@ -100,6 +100,14 @@ resource "google_service_account_iam_member" "dataform_token_creator" {
   depends_on = [google_service_account.dataform_sa, google_project_service.dataform_api]
 }
 
+resource "google_service_account_iam_member" "dataform_sa_user" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.service_account_name}@${var.project_id}.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-dataform.iam.gserviceaccount.com"
+
+  depends_on = [google_service_account.dataform_sa, google_project_service.dataform_api]
+}
+
 resource "google_dataform_repository" "dataform_repo" {
   provider     = google-beta
   project      = var.project_id
