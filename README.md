@@ -83,18 +83,19 @@ This is a simple demo of using Dataform to manage data workflows in BigQuery. It
 
 ## Teardown
 
-1. Use the pre-tf-cleanup.py to do some cleanup that Terraform can't
-   1. create a virtual environment
-   2. install the requirements
-   3. run the script
+1. Use the **pre-tf-cleanup.py** to do some cleanup that Terraform can't
+   1. Create a virtual environment
+   2. Install the requirements
+   3. Run the script (sub repo name, default being dataform-demo-repo)
       ```bash
       cd ~/dataform-demo/misc/
       python -m venv .venv
       source .venv/bin/activate
       pip install -r requirements.txt
-      python pre-tf-cleanup.py
+      python pre-tf-cleanup.py <repo-name>
       ```
 2. Then use Terraform to tear the rest down
    ```bash
+   cd terraform
    terraform destroy
    ```

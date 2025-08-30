@@ -32,6 +32,11 @@ resource "google_project_service" "bigquery_api" {
   disable_on_destroy = false
 }
 
+resource "google_project_service" "secret_manager_api" {
+  service            = "secretmanager.googleapis.com"
+  disable_on_destroy = false
+}
+
 # Create BigQuery datasets
 resource "google_bigquery_dataset" "raw_data" {
   dataset_id  = "dataform_demo_raw_data"
@@ -93,11 +98,19 @@ resource "google_project_iam_member" "dataform_bigquery_jobuser" {
 }
 
 resource "google_service_account_iam_member" "dataform_token_creator" {
-  service_account_id = "projects/${var.project_id}/serviceAccounts/dataform-demo-sa@jwd-gcp-demos.iam.gserviceaccount.com"
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.service_account_name}@${var.project_id}.iam.gserviceaccount.com"
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-dataform.iam.gserviceaccount.com"
 
-  depends_on = [google_service_account.dataform_sa]
+  depends_on = [google_service_account.dataform_sa, google_project_service.dataform_api]
+}
+
+resource "google_service_account_iam_member" "dataform_sa_user" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${var.service_account_name}@${var.project_id}.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-dataform.iam.gserviceaccount.com"
+
+  depends_on = [google_service_account.dataform_sa, google_project_service.dataform_api]
 }
 
 resource "google_dataform_repository" "dataform_repo" {
@@ -134,6 +147,8 @@ resource "google_secret_manager_secret" "github_token" {
   replication {
     auto {}
   }
+
+  depends_on = [google_project_service.secret_manager_api]
 }
 
 resource "google_secret_manager_secret_version" "github_token" {
